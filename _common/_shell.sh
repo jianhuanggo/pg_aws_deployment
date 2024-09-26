@@ -1,0 +1,1 @@
+find . -type f -name '*.py' -not -path ".*/lib/*" -exec grep -l "trace_" {} \;
