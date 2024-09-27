@@ -61,56 +61,10 @@ Add self healing capability:
 
 
 """
+from _util import _util_common as _util_common_
 
 
-def main(event, context):
-    from _example import example_deployment_lambda
-    return example_deployment_lambda.example_end_2_end()
-
-
-def main1(event, context):
-    # from _example import example_deployment_lambda2
-    # return example_deployment_lambda2.example_end_2_end()
-    from _example import example_deployment_lambda2_1
-    return example_deployment_lambda2_1.example_end_2_end()
-    exit(0)
-    return example_deployment_lambda2.destroy_deployment_example()
-    exit(0)
-    from _deployment.deploy_api_gateway import deploy_api_gateway
-    deploy_api_gateway.run(ecr_repository_name="pg_simple_website_streamlit-test",
-                           aws_region="us-east-1",
-                           aws_account_number="717435123117",
-                           project_path="/Users/jianhuang/anaconda3/envs/pg_simple_login_ui/pg_simple_login_ui",
-                           lambda_function_name="pg_simple_website_streamlit",
-                           lambda_function_role="pg_simple_website_streamlit-role",
-                           api_gateway_api_name="pg_simple_website_streamlit-test"
-                           )
-    exit(0)
-    from _example import example_deployment_website, example_deployment_website_react
-    #return example_deployment_website_react.example_website_ec2_react_destroy()
-    return example_deployment_website_react.example_website_ec2_react(project_name="react-app",
-                                                                      project_path="/Users/jianhuang/projects/ui/pg_website_react2/template/vertical_timeline")
-    #return example_deployment_website.example_website_ec2_destroy()
-    #return example_deployment_website.example_website_ec2()
-
-
-def main2(event, context):
-    from _example.example_describe_ec2 import describe_ec2_get_spot_request, terminate_spot_request_and_instances, terminate_instance_and_wait
-    # from _example.example_describe_ec2 import status_for_spot_request
-    # print(status_for_spot_request("sir-9dzpxtqk"))
-    # exit(0)
-
-    from _aws import ec2
-    print(ec2.describe_key_pair("ssdsdssd"))
-    exit(0)
-
-    print(describe_ec2_get_spot_request("i-0629306d84835d625"))
-
-    # terminate_spot_request_and_instances("sir-9dzpxtqk")
-    terminate_instance_and_wait("i-0629306d84835d625-1")
-
-
-def main_react_example():
+def main_pattern_ec2_react():
     from _example import example_deployment_website, example_deployment_website_react
     # return example_deployment_website_react.example_website_ec2_react_destroy()
     return example_deployment_website_react.example_website_ec2_react(project_name="react-app",
@@ -119,22 +73,48 @@ def main_react_example():
     # return example_deployment_website.example_website_ec2()
 
 
-def main_example_website():
+def main_pattern_ec2_streamlit():
     from _example import example_deployment_website
     return example_deployment_website.example_website_ec2()
     # return example_deployment_website.example_website_ec2_destroy()
 
 
-def main_react_example():
-    from _example import example_deployment_website, example_deployment_website_react
-    # return example_deployment_website_react.example_website_ec2_react_destroy()
-    return example_deployment_website_react.example_website_ec2_react(project_name="react-app",
-                                                                      project_path="/Users/jianhuang/projects/ui/pg_website_react2/template/vertical_timeline")
+def main_pattern_apigateway_lambda():
+    # from _code import _generate_lambda_function
+    # _generate_lambda_function.run("/Users/jianhuang/anaconda3/envs/transcribe_5/transcribe_5")
+    #
+    # exit(0)
+
+
+    from _task import _aws_apigateway_lambda
+    ecr_repository_name = "pg_transcribe_5_test"
+
+    lambda_function_role = f"role-auto-deployment-lambda-{_util_common_.get_random_string(6)}"
+    lambda_function_name = f"lambda-{ecr_repository_name}"
+    project_path = "/Users/jianhuang/anaconda3/envs/transcribe_5/transcribe_5"
+    api_gateway_api_name = "MyApi_new4"
+    aws_account_number = "717435123117"
+    api_method = "GET"
+    aws_region = "us-east-1"
+
+    _aws_apigateway_lambda.create_deployment(ecr_repository_name=ecr_repository_name,
+                                             lambda_function_role=lambda_function_role,
+                                             lambda_function_name=lambda_function_name,
+                                             project_path=project_path,
+                                             api_gateway_api_name=api_gateway_api_name,
+                                             aws_account_number=aws_account_number,
+                                             api_method=api_method,
+                                             aws_region=aws_region)
+
+    exit(0)
+
+    _aws_apigateway_lambda.destroy_deployment(lambda_function_name=lambda_function_name,
+                                              api_gateway_api_name=api_gateway_api_name,
+                                              aws_region=aws_region)
+
+
+
 
 
 if __name__ == "__main__":
-    # print(main2({}, {}))
-    # exit(0)
-    # print(main1({}, {}))
-    # print(main_react_example())
-    print(main_example_website())
+    print(main_pattern_apigateway_lambda())
