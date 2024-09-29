@@ -53,7 +53,7 @@ def lambda_handler(event, context):
     return template
 
 
-def generic_lambda_dokcer_template():
+def generic_lambda_docker_template():
     template = """FROM public.ecr.aws/lambda/python:3.11
 RUN yum update -y
 RUN yum install vi tar xz wget -y
@@ -63,4 +63,24 @@ CMD ["lambda_function.lambda_handler"]
 
     """
 
+    return template
+
+
+def generic_streamlit_docker_template():
+    template = """FROM python:3.11-slim
+WORKDIR /app
+
+# Copy the current directory contents into the container at /app
+COPY . /app
+
+# Install any needed packages specified in requirements.txt
+RUN pip install -r requirements.txt
+RUN pip install streamlit
+
+# Expose port 8501 for the Streamlit app
+EXPOSE 8501
+
+# Command to run the Streamlit app
+CMD ["streamlit", "run", "main.py", "--server.port=8501", "--server.address=0.0.0.0"]
+"""
     return template

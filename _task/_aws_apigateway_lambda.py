@@ -2,6 +2,7 @@ import os.path
 from time import sleep
 from _common import _common as _common_
 from _util import _util_file as _util_file_
+from _code import _generate_docker_file, _generate_lambda_function
 
 __WAIT_TIME__ = 10
 
@@ -61,7 +62,11 @@ def create_deployment(ecr_repository_name: str,
     # api_gateway_api_name = "MyApi_new4"
     # api_method = "GET"
     from _code import _generate_lambda_function
-    _generate_lambda_function.run(project_path)
+    _generate_lambda_function.generate_lambda_handler(project_path)
+
+    docker_file_path = os.path.join(project_path, "Dockerfile")
+    _generate_docker_file.generate_docker_file(docker_filepath=docker_file_path,
+                                               docker_template="generic_lambda_docker_template")
 
     from _deployment.build_image import setup_ecr
 
@@ -76,12 +81,9 @@ def create_deployment(ecr_repository_name: str,
                   )
 
     sleep(__WAIT_TIME__)
-    docker_file_path = os.path.join(project_path, "Dockerfile")
-    if _util_file_.is_file_exist(docker_file_path):
-        _common_.info_logger(f"using Dockerfile at {docker_file_path}")
-    else:
-        _common_.error_logger(f"Dockerfile does not exist at {docker_file_path}",
-                              "DockerfileError")
+
+
+
 
 
     # build docker image

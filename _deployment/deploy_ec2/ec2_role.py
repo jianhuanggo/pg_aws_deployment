@@ -116,7 +116,17 @@ def run(project_name: str,
                                               policy_arn=policy_arn)
     if not response:
         _common_.error_logger(currentframe().f_code.co_name,
-                              f"unable to attach policy to iam role {iam_role_name}",
+                              f"unable to attach policy {policy_arn} to iam role {iam_role_name}",
+                              logger=None,
+                              mode="error",
+                              ignore_flag=False)
+
+    policy_arn = "arn:aws:iam::717435123117:policy/iam_policy_full_access_pg-web-app-0001"
+    response = iam_role.attach_policy_to_role(iam_role_name=iam_role_name,
+                                              policy_arn=policy_arn)
+    if not response:
+        _common_.error_logger(currentframe().f_code.co_name,
+                              f"unable to attach policy {policy_arn} to iam role {iam_role_name}",
                               logger=None,
                               mode="error",
                               ignore_flag=False)

@@ -74,9 +74,16 @@ def main_pattern_ec2_react():
 
 
 def main_pattern_ec2_streamlit():
-    from _example import example_deployment_website
-    return example_deployment_website.example_website_ec2()
-    # return example_deployment_website.example_website_ec2_destroy()
+    from _task import _deploy_aws_website_streamlit
+
+    project_name = "pg_wa_make_story_1"
+    project_path = "/Users/jianhuang/anaconda3/envs/pg-wa-make-story-1/pg-wa-make-story-1"
+
+    # project_path = "/Users/jianhuang/anaconda3/envs/pg_simple_login_ui/pg_simple_login_ui"
+
+
+    _deploy_aws_website_streamlit.create_deployment(project_name=project_name,
+                                                    project_path=project_path)
 
 
 def main_pattern_apigateway_lambda():
@@ -117,4 +124,6 @@ def main_pattern_apigateway_lambda():
 
 
 if __name__ == "__main__":
+    print(main_pattern_ec2_streamlit())
+    exit(0)
     print(main_pattern_apigateway_lambda())
