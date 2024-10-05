@@ -28,7 +28,8 @@ def lambda_handler(event, context):
                     },
                     'body': _util_file_.json_dumps("input variable is missing")
             }
-
+        
+        
         return {
             'statusCode': 200,
             'headers': {

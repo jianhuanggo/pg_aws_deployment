@@ -33,9 +33,15 @@ def load_module_from_path(module_name, filepath):
     """
 
     spec = importlib.util.spec_from_file_location(module_name, filepath)
+
+    print(filepath)
+
+
     if spec is None:
         raise ImportError(f"Cannot load the module from the path: {filepath}")
+
     module = importlib.util.module_from_spec(spec)
+
     spec.loader.exec_module(module)
     return module
 

@@ -47,6 +47,7 @@ def generate_lambda_handler(filepath: str) -> bool:
     """
     Generate a lambda handler function from a given Python file.
     """
+
     lambda_handler_filepath = os.path.join(filepath, "lambda_function.py")
     if _util_file_.is_file_exist(lambda_handler_filepath):
         return

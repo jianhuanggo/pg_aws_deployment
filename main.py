@@ -94,11 +94,12 @@ def main_pattern_apigateway_lambda():
 
 
     from _task import _aws_apigateway_lambda
-    ecr_repository_name = "pg_transcribe_5_test"
+    ecr_repository_name = "pg_api_metadata_get"
 
     lambda_function_role = f"role-auto-deployment-lambda-{_util_common_.get_random_string(6)}"
     lambda_function_name = f"lambda-{ecr_repository_name}"
-    project_path = "/Users/jianhuang/anaconda3/envs/transcribe_5/transcribe_5"
+    # project_path = "/Users/jianhuang/anaconda3/envs/pg_api_metadata/pg_api_metadata"
+    project_path = "/Users/jianhuang/anaconda3/envs/pg_api_metadata_get/pg_api_metadata_get"
     api_gateway_api_name = "MyApi_new4"
     aws_account_number = "717435123117"
     api_method = "GET"
@@ -124,6 +125,6 @@ def main_pattern_apigateway_lambda():
 
 
 if __name__ == "__main__":
-    print(main_pattern_ec2_streamlit())
-    exit(0)
+    # print(main_pattern_ec2_streamlit())
+    # exit(0)
     print(main_pattern_apigateway_lambda())
