@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Dict
 import os
 import boto3
 from logging import Logger as Log
@@ -279,6 +279,31 @@ def detach_all_policies_from_role(iam_role_name: str,
         _common_.info_logger(f"Policy {policy.get('PolicyArn')} successfully detached from role {iam_role_name}")
     return True
 
+@_common_.aws_client_handle_exceptions()
+def check_instance_profile_exists(instance_profile_name: str,
+                                  aws_region: str = "us-east-1",
+                                  logger: Log = None) -> bool:
+    """check whether instance profile already exists
+
+    Args:
+        instance_profile_name: instance profile name
+        aws_region: aws region
+        logger: log object
+
+    Returns:
+        return True if successful otherwise False
+
+    """
+    # initialize the boto3 iam client
+    iam_client = aws_client("iam", aws_region)
+
+    # List all instance profiles
+    paginator = iam_client.get_paginator('list_instance_profiles')
+    for page in paginator.paginate():
+        for profile in page['InstanceProfiles']:
+            if profile['InstanceProfileName'] == instance_profile_name:
+                return True  # Instance profile exists
+    return False  # Instance profile does not exist
 
 @_common_.aws_client_handle_exceptions()
 def create_instance_profile(instance_profile_name: str,
@@ -440,7 +465,6 @@ def get_instance_profile(instance_profile_name: str,
     iam_client = aws_client("iam", aws_region)
 
     # Replace with your instance profile name
-    instance_profile_name = 'your-instance-profile-name'
     _parameters = {
         "InstanceProfileName": instance_profile_name
     }
@@ -457,3 +481,159 @@ def get_instance_profile(instance_profile_name: str,
 
     # Print out the associated roles
     return [each_role.get("RoleName") for each_role in response.get("InstanceProfile", {}).get("Roles", [])]
+
+
+
+@_common_.aws_client_handle_exceptions("NoSuchEntity")
+def get_iam_policy_from_arn(policy_arn: str,
+                            aws_region: str = "us-east-1",
+                            logger: Log = None) -> List[str]:
+    """get iam policy by its arn
+
+    Args:
+        policy_arn: policy arn
+        aws_region: aws region
+        logger: logger object
+
+    Returns:
+        returns policy details
+
+    """
+
+    # initialize the boto3 iam client
+    iam_client = aws_client("iam", aws_region)
+
+    _parameters = {
+        "PolicyArn": policy_arn
+    }
+
+    response = iam_client.get_policy(**_parameters)
+
+    if response.get("ResponseMetadata").get("HTTPStatusCode") != 200:
+        _common_.error_logger(currentframe().f_code.co_name,
+                              f"operation failed, reason response code is not 200",
+                              logger=logger,
+                              mode="error",
+                              ignore_flag=False)
+
+    return response.get("Policy")
+
+
+@_common_.aws_client_handle_exceptions("NoSuchEntity")
+def get_iam_policy_from_name(policy_name: str,
+                            aws_region: str = "us-east-1",
+                            logger: Log = None) -> List[str]:
+    """get iam policy by its policy name
+
+    Args:
+        policy_name: policy name
+        aws_region: aws region
+        logger: logger object
+
+    Returns:
+        returns policy details
+
+    """
+
+    # initialize the boto3 iam client
+    iam_client = aws_client("iam", aws_region)
+
+    # List and detach the policy from users
+    paginator = iam_client.get_paginator('list_policies')
+    for page in paginator.paginate(Scope='All'):  # Scope can be 'AWS', 'Local', or 'All'
+        for policy in page['Policies']:
+            if policy['PolicyName'] == policy_name:
+                _common_.info_logger("Policy found:", policy, logger=logger)
+                # Retrieve detailed policy information
+                return get_iam_policy_from_arn(policy_arn=policy['Arn'])
+
+
+
+@_common_.aws_client_handle_exceptions("NoSuchEntity")
+def delete_iam_policy_by_arn(policy_arn: str,
+                         aws_region: str = "us-east-1",
+                         logger: Log = None) -> bool:
+    """first detach policy from its usage and then delete iam policy by its policy arn
+
+    Args:
+        policy_arn: policy name
+        aws_region: aws region
+        logger: logger object
+
+    Returns:
+        returns true if successful otherwise false
+
+    """
+
+    # initialize the boto3 iam client
+    iam_client = aws_client("iam", aws_region)
+
+    # Detach the policy from all entities (users, groups, roles)
+    def detach_policy_entities(policy_arn: str):
+        # List and detach the policy from users
+        attached_users = iam_client.list_entities_for_policy(PolicyArn=policy_arn, EntityFilter='User')
+        for user in attached_users['PolicyUsers']:
+            iam_client.detach_user_policy(UserName=user['UserName'], PolicyArn=policy_arn)
+
+        # List and detach the policy from groups
+        attached_groups = iam_client.list_entities_for_policy(PolicyArn=policy_arn, EntityFilter='Group')
+        for group in attached_groups['PolicyGroups']:
+            iam_client.detach_group_policy(GroupName=group['GroupName'], PolicyArn=policy_arn)
+
+        # List and detach the policy from roles
+        attached_roles = iam_client.list_entities_for_policy(PolicyArn=policy_arn, EntityFilter='Role')
+        for role in attached_roles['PolicyRoles']:
+            iam_client.detach_role_policy(RoleName=role['RoleName'], PolicyArn=policy_arn)
+
+    # Detach policy from all entities
+    detach_policy_entities(policy_arn)
+
+    # Delete the policy
+    iam_client.delete_policy(PolicyArn=policy_arn)
+    _common_.info_logger(f"Policy with ARN {policy_arn} has been deleted.", logger=logger)
+    return True
+
+
+@_common_.aws_client_handle_exceptions("NoSuchEntity")
+def create_iam_policy(policy_name: str,
+                      policy_document: Dict,
+                      aws_region: str = "us-east-1",
+                      logger: Log = None) -> bool:
+
+    """first detach policy from its usage and then delete iam policy by its policy arn
+
+    Args:
+        policy_name: policy name
+        policy_document: policy document
+        aws_region: aws region
+        logger: logger object
+
+    Returns:
+        returns true if successful otherwise false
+
+    """
+
+    # initialize the boto3 iam client
+    iam_client = aws_client("iam", aws_region)
+
+    _parameters = {
+        "PolicyName": policy_name,
+        "PolicyDocument": json.dumps(policy_document),
+        "Description": "Custom policy"
+    }
+
+
+
+    response = iam_client.create_policy(**_parameters)
+
+    if response.get("ResponseMetadata").get("HTTPStatusCode") != 200:
+        _common_.error_logger(currentframe().f_code.co_name,
+                              f"operation failed, reason response code is not 200",
+                              logger=logger,
+                              mode="error",
+                              ignore_flag=False)
+    return response.get("Policy", {}).get("Arn")
+
+
+
+

@@ -17,7 +17,7 @@ def run(ecr_repository_name: str,
         aws_account_number: str = None,
         project_path: str = None,
         lambda_function_name: str = None,
-        lambda_function_role: str = None,
+        lambda_function_role_name: str = None,
         api_gateway_api_name: str = None,
         api_method: str = "GET",
         aws_region: str = "us-east-1"

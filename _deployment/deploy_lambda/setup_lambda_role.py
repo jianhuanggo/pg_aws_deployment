@@ -171,6 +171,8 @@ def create_lambda_function_role(aws_role_name: str,
                                 aws_region: str = "us-east-1",
                                 logger: Log = None
                                 ) -> Union[str, None]:
+
+
     """Create lamda function role
 
     Args:
@@ -206,16 +208,16 @@ def run(ecr_repository_name: str,
         aws_account_number: str = None,
         project_path: str = None,
         lambda_function_name: str = None,
-        lambda_function_role: str = None,
+        lambda_function_role_name: str = None,
         api_gateway_api_name: str = None) -> None:
 
     # Create IAM role for Lambda
 
-    if check_role_exists(lambda_function_role):
-        delete_role(lambda_function_role)
+    if check_role_exists(lambda_function_role_name):
+        delete_role(lambda_function_role_name)
         sleep(_WAIT_TIME_)
 
-    lambda_function_role_arn = create_lambda_function_role(lambda_function_role)
+    lambda_function_role_arn = create_lambda_function_role(lambda_function_role_name)
     sleep(_WAIT_TIME_)
 
 

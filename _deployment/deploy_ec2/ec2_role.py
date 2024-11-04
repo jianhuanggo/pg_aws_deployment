@@ -121,24 +121,31 @@ def run(project_name: str,
                               mode="error",
                               ignore_flag=False)
 
-    policy_arn = "arn:aws:iam::717435123117:policy/iam_policy_full_access_pg-web-app-0001"
-    response = iam_role.attach_policy_to_role(iam_role_name=iam_role_name,
-                                              policy_arn=policy_arn)
-    if not response:
-        _common_.error_logger(currentframe().f_code.co_name,
-                              f"unable to attach policy {policy_arn} to iam role {iam_role_name}",
-                              logger=None,
-                              mode="error",
-                              ignore_flag=False)
+
+    # policy_arn = "arn:aws:iam::717435123117:policy/iam_policy_full_access_pg-web-app-0001"
+    from _config import _config as _config_
+
+    _config = _config_.PGConfigSingleton()
+    if _config.config["project_iam_policy_arn"]:
+        response = iam_role.attach_policy_to_role(iam_role_name=iam_role_name,
+                                                  policy_arn=_config.config["project_iam_policy_arn"])
+        if not response:
+            _common_.error_logger(currentframe().f_code.co_name,
+                                  f"unable to attach policy {policy_arn} to iam role {iam_role_name}",
+                                  logger=None,
+                                  mode="error",
+                                  ignore_flag=False)
 
     # create instance profile
-    response = iam_role.create_instance_profile(instance_profile_name=instance_profile_name)
-    if not response:
-        _common_.error_logger(currentframe().f_code.co_name,
-                              f"unable to create instance role {instance_profile_name}",
-                              logger=None,
-                              mode="error",
-                              ignore_flag=False)
+
+    if not iam_role.check_instance_profile_exists(instance_profile_name=instance_profile_name):
+        response = iam_role.create_instance_profile(instance_profile_name=instance_profile_name)
+        if not response:
+            _common_.error_logger(currentframe().f_code.co_name,
+                                  f"unable to create instance role {instance_profile_name}",
+                                  logger=None,
+                                  mode="error",
+                                  ignore_flag=False)
 
     # attach iam role to instance profile
     response = iam_role.add_role_to_instance_profile(instance_profile_name=instance_profile_name,

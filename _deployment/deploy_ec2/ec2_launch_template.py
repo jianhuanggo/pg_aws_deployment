@@ -3,6 +3,7 @@ from logging import Logger as Log
 from inspect import currentframe
 from time import sleep
 from _common import _common as _common_
+from _config import _config as _config_
 
 
 _WAIT_TIME_ = 10
@@ -64,6 +65,11 @@ def run(lt_name: str,
                                   mode="error",
                                   ignore_flag=False)
             return None
+
+    _config = _config_.PGConfigSingleton()
+
+    if not kms_id:
+        kms_id = _config.config.get("kms_arn")
 
     from _aws import ec2
     _parameter = {

@@ -21,6 +21,7 @@ def extract_from_statements(source_code: str):
 
     return matches
 
+
 @_common_.exception_handlers(logger=None)
 def convert_lambda_function(declare_variables: str,
                             variables_extraction: str,
@@ -38,8 +39,6 @@ def convert_lambda_function(declare_variables: str,
         "return_statement": return_statement
     }
     return _generate_common.apply_template(lambda_handler_template, _params)
-
-
 
 
 @_common_.exception_handlers(logger=None)

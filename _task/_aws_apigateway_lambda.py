@@ -13,13 +13,10 @@ __WAIT_TIME__ = 10
 """
 
 
-
-def create_deployment(ecr_repository_name: str,
-                      lambda_function_role: str,
-                      lambda_function_name: str,
+def create_deployment(project_name: str,
                       project_path: str,
-                      api_gateway_api_name: str,
-                      aws_account_number: str,
+                      api_gateway_api_name: str = "MyApi_new4",
+                      aws_account_number: str = "717435123117",
                       api_method: str = "GET",
                       aws_region: str = "us-east-1"
                       ):
@@ -52,6 +49,11 @@ def create_deployment(ecr_repository_name: str,
     Returns:
 
     """
+    from _util import _util_common as _util_common_
+
+    ecr_repository_name = f"ecr_{project_name}"
+    lambda_function_role_name = f"role-lambda-{project_name}-{_util_common_.get_random_string(6)}"
+    lambda_function_name = f"lambda-{project_name}"
 
     # ecr_repository_name = "pg_transcribe_3_test"
     # aws_account_number = "717435123117"
@@ -71,19 +73,16 @@ def create_deployment(ecr_repository_name: str,
     from _deployment.build_image import setup_ecr
 
     # create ecr repository
-    setup_ecr.run(ecr_repository_name,
-                  aws_region,
-                  aws_account_number,
-                  project_path,
-                  lambda_function_name,
-                  lambda_function_role,
-                  api_gateway_api_name
+    setup_ecr.run(ecr_repository_name=ecr_repository_name,
+                  aws_region=aws_region,
+                  aws_account_number=aws_account_number,
+                  project_path=project_path,
+                  lambda_function_name=lambda_function_name,
+                  lambda_function_role=lambda_function_role_name,
+                  api_gateway_api_name=api_gateway_api_name
                   )
 
     sleep(__WAIT_TIME__)
-
-
-
 
 
     # build docker image
@@ -94,7 +93,7 @@ def create_deployment(ecr_repository_name: str,
                     project_path=project_path,
                     dockerfile_filepath=docker_file_path,
                     lambda_function_name=lambda_function_name,
-                    lambda_function_role=lambda_function_role,
+                    lambda_function_role_name=lambda_function_role_name,
                     api_gateway_api_name=api_gateway_api_name
                     )
 
@@ -102,26 +101,28 @@ def create_deployment(ecr_repository_name: str,
 
     # create lambda role
     from _deployment.deploy_lambda import setup_lambda_role
-    setup_lambda_role.run(ecr_repository_name,
-                          aws_region,
-                          aws_account_number,
-                          project_path,
-                          lambda_function_name,
-                          lambda_function_role,
-                          api_gateway_api_name
-                          )
 
+    setup_lambda_role.run(ecr_repository_name=ecr_repository_name,
+                          aws_region=aws_region,
+                          aws_account_number=aws_account_number,
+                          project_path=project_path,
+                          lambda_function_name=lambda_function_name,
+                          lambda_function_role_name=lambda_function_role_name,
+                          api_gateway_api_name=api_gateway_api_name
+                          )
     sleep(__WAIT_TIME__)
 
     # deploy lambda
     from _deployment.deploy_lambda import deploy_lambda
-    deploy_lambda.run(ecr_repository_name,
-                      aws_region,
-                      aws_account_number,
-                      project_path,
-                      lambda_function_name,
-                      lambda_function_role,
-                      api_gateway_api_name
+
+    deploy_lambda.run(project_name=project_name,
+                      ecr_repository_name=ecr_repository_name,
+                      aws_region=aws_region,
+                      aws_account_number=aws_account_number,
+                      project_path=project_path,
+                      lambda_function_name=lambda_function_name,
+                      lambda_function_role_name=lambda_function_role_name,
+                      api_gateway_api_name=api_gateway_api_name
                       )
 
     sleep(__WAIT_TIME__)
@@ -132,7 +133,7 @@ def create_deployment(ecr_repository_name: str,
                            aws_account_number=aws_account_number,
                            project_path=project_path,
                            lambda_function_name=lambda_function_name,
-                           lambda_function_role=lambda_function_role,
+                           lambda_function_role_name=lambda_function_role_name,
                            api_gateway_api_name=api_gateway_api_name,
                            api_method=api_method,
                            aws_region=aws_region

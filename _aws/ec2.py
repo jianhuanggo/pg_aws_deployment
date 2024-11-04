@@ -1,13 +1,12 @@
 from typing import List, Union, Dict, Optional
-import os
 import boto3
+from botocore.exceptions import ClientError
 from time import sleep
 from logging import Logger as Log
 from inspect import currentframe
-import subprocess
-import json
 from _common import _common as _common_
 from _util import _util_common as _util_common_
+
 
 
 __WAIT_TIME__ = 10
@@ -762,19 +761,25 @@ def get_security_group_id(sg_name: str,
 
 @_common_.aws_client_handle_exceptions()
 def delete_security_group(sg_id: str,
+                          max_retries: int = 5,
+                          wait_time: int = 60,
                           aws_region: str = "us-east-1",
                           logger: Log = None
                           ) -> bool:
     """delete security group id if the specified security group exists
 
     Args:
-        aws_region: aws region
         sg_id: security group id
+        max_retries: max retries
+        wait_time: wait time
+        aws_region: aws region
         logger: logger
 
     Returns:
         return group id if exists else None
     """
+
+
     # initialize the boto3 ec2 client
     ec2_client = boto3.client('ec2', region_name=aws_region)
 
@@ -782,15 +787,32 @@ def delete_security_group(sg_id: str,
     _parameter = {
         "GroupId": sg_id
     }
-    response = ec2_client.delete_security_group(**_parameter)
-    if response.get("ResponseMetadata").get("HTTPStatusCode") != 200:
-        _common_.error_logger(currentframe().f_code.co_name,
-                              f"operation failed, reason response code is not 200",
-                              logger=logger,
-                              mode="error",
-                              ignore_flag=False)
-    _common_.info_logger(f"security group id '{sg_id}' is deleted")
-    return True
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            response = ec2_client.delete_security_group(**_parameter)
+            if response.get("ResponseMetadata").get("HTTPStatusCode") != 200:
+                _common_.error_logger(currentframe().f_code.co_name,
+                                      f"operation failed, reason response code is not 200",
+                                      logger=logger,
+                                      mode="error",
+                                      ignore_flag=False)
+            _common_.info_logger(f"security group id '{sg_id}' is deleted")
+            return True
+        except ClientError as err:
+            if err.response['Error']['Code'] == 'DependencyViolation':
+                _common_.info_logger(f"Attempt {attempt}: Dependency violation detected. Retrying in {wait_time} seconds...")
+                sleep(wait_time)  # Wait before retrying
+            else:
+                # If it's a different error, raise it
+                _common_.error_logger(currentframe().f_code.co_name,
+                                      f"Error occurred: {err}, Failed to delete security group {sg_id} after {max_retries} attempts.",
+                                      logger=logger,
+                                      mode="error",
+                                      ignore_flag=False)
+
+    return False
+
 
 
 @_common_.aws_client_handle_exceptions()
@@ -1028,6 +1050,8 @@ def create_launch_template(project_id: str,
         returns the response from the create launch template operation
 
     """
+
+
 
     # initialize the boto3 ec2 client
     ec2_client = boto3.client('ec2', region_name=aws_region)

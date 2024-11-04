@@ -72,6 +72,7 @@ def run(project_name: str,
         "file_path": private_key_path,
         "aws_region": aws_region
     }
+
     ec2_key_pair.run(**_parameter)
 
     # find an appropriate subnet

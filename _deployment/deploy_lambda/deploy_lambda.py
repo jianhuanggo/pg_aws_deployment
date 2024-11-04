@@ -1,5 +1,5 @@
 
-from typing import List, Union
+from typing import List, Union, Dict
 import os
 import boto3
 from logging import Logger as Log
@@ -205,6 +205,7 @@ def create_lambda_function(function_name: str,
                            aws_region: str,
                            lambda_function_role_arn: str,
                            timeout: int = 30,
+                           vpc_config: Dict = None,
                            logger: Log = None) -> Union[str, None]:
 
     """Creates an aws lambda function using an image stored in an ECR repository.
@@ -225,6 +226,7 @@ def create_lambda_function(function_name: str,
     # Initialize the Lambda client
     lambda_client = boto3.client('lambda', region_name=aws_region)
 
+
     try:
         # Create the Lambda function
         _parameters = {
@@ -235,6 +237,8 @@ def create_lambda_function(function_name: str,
             "Code": {"ImageUri": image_uri},
             "Timeout": timeout
         }
+        if vpc_config:
+            _parameters["VpcConfig"] = vpc_config
         response = lambda_client.create_function(**_parameters)
         _common_.info_logger(f"Lambda function {function_name} created ")
         return response.get("FunctionArn")
@@ -259,7 +263,8 @@ def create_lambda_function(function_name: str,
     return None
 
 
-def run(ecr_repository_name: str,
+def run(project_name: str,
+        ecr_repository_name: str,
         aws_region: str,
         aws_account_number: str = None,
         project_path: str = None,
@@ -277,10 +282,45 @@ def run(ecr_repository_name: str,
         delete_lambda_function(lambda_function_name)
         sleep(_WAIT_TIME_)
 
-    sleep(15)
-    create_lambda_function(lambda_function_name,
-                           ecr_image_uri,
-                           aws_region,
-                           role_arn,
-                           31)
+    sleep(_WAIT_TIME_)
+
+
+    # find an appropriate subnet
+
+    from _deployment.deploy_ec2 import ec2_network
+    _parameters = {
+        "aws_region": aws_region
+    }
+    network_info = ec2_network.run(**_parameters)
+    vpc_id = network_info.get("vpc_id")
+
+    sleep(_WAIT_TIME_)
+
+
+    # create security group for lambda function
+
+    from _deployment.deploy_lambda import lambda_security_group
+
+    sg_name = f"sg_{lambda_function_name}"
+
+    _parameter = {
+        "vpc_id": vpc_id,
+        "sg_name": sg_name,
+        "project_name": project_name,
+        "sg_ingress_rules": [],
+        "aws_region": aws_region
+    }
+
+    sg_id = lambda_security_group.run(**_parameter)
+
+    VpcConfig = {
+        'SubnetIds': [network_info.get("public_subnet")],
+        'SecurityGroupIds': [sg_id]
+    }
+    create_lambda_function(function_name=lambda_function_name,
+                           image_uri=ecr_image_uri,
+                           aws_region=aws_region,
+                           lambda_function_role_arn=role_arn,
+                           timeout=31,
+                           vpc_config=VpcConfig)
     sleep(_WAIT_TIME_)

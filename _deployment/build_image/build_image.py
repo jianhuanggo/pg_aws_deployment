@@ -109,7 +109,7 @@ def run(ecr_repository_name: str,
         project_path: str = None,
         dockerfile_filepath: str = "Dockerfile",
         lambda_function_name: str = None,
-        lambda_function_role: str = None,
+        lambda_function_role_name: str = None,
         api_gateway_api_name: str = None) -> bool:
 
     """this function is to setup ecr repository and build docker image
@@ -121,7 +121,7 @@ def run(ecr_repository_name: str,
         project_path: project path
         dockerfile_filepath: dockerfile path
         lambda_function_name: lambda function name
-        lambda_function_role: lambda function role
+        lambda_function_role_name: lambda function role
         api_gateway_api_name: api gateway api name
 
     Returns:
