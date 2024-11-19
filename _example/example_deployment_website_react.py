@@ -8,7 +8,9 @@ _WAIT_TIME_ = 4
 
 def example_website_ec2_react(
         project_name: str = "pg_simple_website_react",
-        project_path: str = "/Users/jianhuang/projects/ui/pg_website_react2"
+        project_path: str = "/Users/jianhuang/projects/ui/pg_website_react2",
+        aws_account_number: str = "717435123117",
+        aws_region: str = "us-east-1"
 ):
     """
     add instance role to the instance
@@ -16,8 +18,6 @@ def example_website_ec2_react(
 
     """
 
-    aws_account_number = "717435123117"
-    aws_region = "us-east-1"
     # project_path = "/Users/jianhuang/anaconda3/envs/pg_simple_login_ui/pg_simple_login_ui"
     # project_path = "/Users/jianhuang/anaconda3/envs/pg_finance_trade_1/pg_finance_trade_1"
     # project_path = "/Users/jianhuang/projects/ui/pg_website_react2"

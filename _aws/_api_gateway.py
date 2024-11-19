@@ -501,6 +501,7 @@ def create_api_gateway_integration(api_gateway_api_id: str,
                                    http_method: str,
                                    aws_account_number: str,
                                    lambda_function_name: str,
+                                   aws_execution_role_arn: str,
                                    aws_region: str = "us-east-1",
                                    logger: Log = None
                                    ) -> bool:
@@ -529,7 +530,8 @@ def create_api_gateway_integration(api_gateway_api_id: str,
         "type": "AWS_PROXY",
         "integrationHttpMethod": "POST",
         "uri": f"arn:aws:apigateway:{aws_region}:lambda:path/2015-03-31/functions/arn:aws:lambda:{aws_region}:{aws_account_number}:function:{lambda_function_name}/invocations",
-        "credentials": f"arn:aws:iam::{aws_account_number}:role/role-api-gateway-ex"
+        # "credentials": f"arn:aws:iam::{aws_account_number}:role/role-api-gateway-ex"
+        "credentials": aws_execution_role_arn
     }
     response = apigateway_client.put_integration(**_parameters)
 

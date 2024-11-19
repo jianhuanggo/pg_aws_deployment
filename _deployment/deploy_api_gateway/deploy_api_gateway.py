@@ -1,4 +1,5 @@
 from time import sleep
+from inspect import currentframe
 from _common import _common as _common_
 from _util import _util_common as _util_common_
 import boto3
@@ -102,14 +103,86 @@ def run(ecr_repository_name: str,
             # Wait before creating the new resource to ensure deletion has propagated
             sleep(_WAIT_TIME_)
 
-    # Create the new resource
+
+    # check whether the execution role exists
+    from _aws import iam_role
+
+    from _util import _util_file
+    if _util_file.is_file_exist("prev_iam_role_api_gateway_ex.txt.json"):
+        prev_iam_role_name = _util_file.json_load("prev_iam_role_api_gateway_ex.txt.json").get("role_name", "")
+
+        if iam_role.check_role_exists(iam_role_name=prev_iam_role_name):
+            if iam_role.detach_all_policies_from_role(iam_role_name=prev_iam_role_name):
+                iam_role.delete_role(iam_role_name=prev_iam_role_name)
+            else:
+                _common_.error_logger(currentframe().f_code.co_name,
+                                      f"unable to detach all policies from iam role {prev_iam_role_name}",
+                                      logger=None,
+                                      mode="error",
+                                      ignore_flag=False)
+
+
+    iam_role_name = f"role-api-gateway-ex-{_util_common_.get_random_string(6)}"
+
+    if iam_role.check_role_exists(iam_role_name=iam_role_name):
+        if iam_role.detach_all_policies_from_role(iam_role_name=iam_role_name):
+            iam_role.delete_role(iam_role_name=iam_role_name)
+        else:
+            _common_.error_logger(currentframe().f_code.co_name,
+                                  f"unable to detach all policies from iam role {iam_role_name}",
+                                  logger=None,
+                                  mode="error",
+                                  ignore_flag=False)
+
+    # create iam api-blunder execution role
+    response = iam_role.create_iam_role("apigateway", iam_role_name)
+    if not response:
+        _common_.error_logger(currentframe().f_code.co_name,
+                              "unable to create iam role",
+                              logger=None,
+                              mode="error",
+                              ignore_flag=False)
+
+    _util_file.json_dump("prev_iam_role_api_gateway_ex.txt.json",
+                         {"role_name": iam_role_name})
+
+    # attach policy to iam role
+    policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+    response = iam_role.attach_policy_to_role(iam_role_name=iam_role_name,
+                                              policy_arn=policy_arn)
+    if not response:
+        _common_.error_logger(currentframe().f_code.co_name,
+                              f"unable to attach policy {policy_arn} to iam role {iam_role_name}",
+                              logger=None,
+                              mode="error",
+                              ignore_flag=False)
+
+    policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+    response = iam_role.attach_policy_to_role(iam_role_name=iam_role_name,
+                                              policy_arn=policy_arn)
+
+    if not response:
+        _common_.error_logger(currentframe().f_code.co_name,
+                              f"unable to attach policy {policy_arn} to iam role {iam_role_name}",
+                              logger=None,
+                              mode="error",
+                              ignore_flag=False)
+
+    # "credentials": f"arn:aws:iam::{aws_account_number}:role/role-api-gateway-ex"
+
+
+    # integrate lambda with api gateway
     response = _api_gateway.create_api_gateway_integration(api_gateway_api_id=api_gateway_api_id,
                                                            resource_id= resource_id,
                                                            http_method=api_method,
                                                            aws_account_number=aws_account_number,
                                                            lambda_function_name=lambda_function_name,
+                                                           aws_execution_role_arn=f"arn:aws:iam::{aws_account_number}:role/role-api-gateway-ex",
                                                            aws_region=aws_region
                                                            )
+
+
+
 
     sleep(_WAIT_TIME_)
 
