@@ -103,7 +103,7 @@ def create_kms_key_alias(alias_name: str,
     kms_client = boto3.client("kms", region_name=aws_region)
 
     _parameters = {
-        "AliasName": alias_name,
+        "AliasName": "alias/" + alias_name,
         "TargetKeyId": key_id
     }
 
@@ -124,6 +124,18 @@ def check_alias_exists(alias_name: str,
                        aws_region="us-east-1",
                        logger: Log = None
                        ) -> bool:
+    """check whether the alias exists
+
+    Args:
+        alias_name: alias name
+        key_id: key id
+        aws_region: aws region
+        logger: logger object
+
+    Returns:
+        return true if the alias exists else false
+
+    """
     # Initialize the KMS client
     kms_client = boto3.client("kms", region_name=aws_region)
 
@@ -134,3 +146,32 @@ def check_alias_exists(alias_name: str,
             if alias.get("AliasName") == alias_name:
                 return True  # Alias exists
     return False  # Alias does not exist
+
+
+@_common_.aws_client_handle_exceptions()
+def get_key_alias_arn(alias_name: str,
+                      aws_region="us-east-1",
+                      logger: Log = None
+                      ) -> Union[str, None]:
+    """get key alias arn
+
+    Args:
+        alias_name: alias name
+        aws_region: aws region
+        logger: logger object
+
+    Returns:
+        return arn of key alias if the alias exists else None
+
+    """
+    # Initialize the KMS client
+    kms_client = boto3.client("kms", region_name=aws_region)
+    print(alias_name)
+
+    # List all aliases and check for the specified alias
+    paginator = kms_client.get_paginator('list_aliases')
+    for page in paginator.paginate():
+        for alias in page['Aliases']:
+            if alias.get("AliasName") == alias_name:
+                return alias.get("AliasArn")  # Alias exists
+    return None  # Alias does not exist
